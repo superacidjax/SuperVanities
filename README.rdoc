@@ -1,0 +1,133 @@
+= Vanities
+
+Vanities is a gem for use with a Rails 3/3.1 project that will transform
+URLs like this:
+
+  http://example.com/users/1
+
+Into something cool, like this:
+
+  http://example.com/foo
+
+== The Vanity URL Explained
+
+Vanities implements the concept of the "vanity URL".  Similar to a vanity
+license plate, it's a unique name or ID chosen by the user that is specific to them.
+However, this doesn't necessarily have to be for a user - in theory, any model in your
+Rails 3 application can use a vanity URL.
+
+This gem works by redirecting requests for a vanity name - say "foo" - to the object
+that owns it.  So for example, visiting example.com/foo would perform a redirect to
+example.com/users/1 (assuming a user object with an ID of 1 owned the "foo" vanity).
+
+== Common Use Cases
+
+Some common use cases for something like vanities would be:
+* user profiles (www.example.com/users/22829 => www.example.com/bob)
+* specific products in an e-commerce system (www.exampleshop.com/products/19920 => www.exampleshop.com/buythis)
+
+== How To Install
+
+Vanities is pretty simple to install.  First, a few requirements and caveats:
+
+=== Requirements
+
+<b>REST-based models</b> - every model with which you want to use vanities MUST be made
+a RESTful resource in your routes file (config/routes.rb).  This is absolutely required.
+
+<b>Rails 3</b> - vanities is built on Rails 3 or 3.1.  It might work with older versions of Rails, but
+only if you go back and reverse engineer some of the routing stuff, and possibly other things
+if using versions of Rails prior to the 2.3.x series. No other versions are supported.
+
+<b>ActiveRecord</b> - vanities needs a table in the database to keep track of the individual
+vanity names.  Datamapper and/or -otherorm- isn't/aren't supported out of the box, but the
+setup itself is so simple that you could probably reverse-engineer this to use another ORM
+if you wanted to.
+
+=== Installation
+
+In your application's Gemfile, add the following line:
+
+  gem 'vanities'
+
+Then in your console/terminal, do:
+
+  bundle install
+
+Next, while still in your terminal/console:
+
+  rails g vanities
+
+You'll see a list of instructions that it'll print out.  Next you'll want to
+open up your model that you want to have a vanity URL (say a User model) and add this
+line to it to substitute the polymorphic association that does all the magic:
+
+  has_vanity
+
+Finally, do:
+
+  rake db:migrate
+
+And you're all set!
+
+=== A word about routes...
+
+Vanities should be set as the absolute last route in your routes.rb file.  The reason
+is because Rails' routing system is set up to take the first route in the file (from the top)
+that matches, and stop there.  If a vanity URL that doesn't exist is higher in routing
+priority than, say, a user's show action, things are going to be a little funky.
+
+All you need to do is cut and paste the route installed for the vanities controller
+from wherever it is in your routes.rb file after installation, and move it to be the
+last route in your system.
+
+== Using vanities
+
+Every model that has a call to 'has_vanity' will have a vanity object associated with it.
+Each instance of your model will have one - and only one - vanity.  Vanities CANNOT be repeated
+across different models.  For example, let's say you have a user with a vanity called "bob", and
+a product; you cannot call the product's vanity "bob" as well, as that's already taken by
+the aforementioned user.
+
+To set up a vanity for a model, all you need to do is create a vanity.  Say you're in the Rails
+console.  This would be as simple as:
+
+  u = User.first
+  u.vanity = Vanity.new(:name => "bob")
+
+Finally, you can go to http://localhost:3000/bob to be automatically redirected
+to the user's 'show' action.
+
+== About the Tests
+
+Vanities is mostly a convenience gem, nothing more.  It makes use of code already tested by Rails, and
+as such, is pretty light on its own tests.  As of version 0.1.3, Vanities includes a test to ensure that
+the 'has_vanity' method does work correctly.  <b>I fully welcome any well written tests for Vanities.</b>
+Just fork, do your work, and submit a pull request.
+
+=== Running the tests
+
+Download this gem then cd to the right directory:
+
+  cd /path/to/your/gem/install/vanities
+
+Then just use ruby to run the tests:
+
+  ruby test/unit/vanities_test.rb
+
+== What version of ActiveRecord can I use this with?
+
+Vanities should work with ActiveRecord 3.0 and 3.1 just fine.  It *probably* works with older
+versions, too. In theory, any version fo ActiveRecord that provides polymorphic associations should work,
+as long as the API stays the same. If you have doubts or questions, feel free to run the tests.
+
+== Changelog
+
+*0.1.3* 17 September 2011: Slight refactor based on suggestions from Marc Gayle (@marcgayle) to
+allow for + and - characters in routes. Also added basic test to ensure 'has_vanity' is loaded into
+ActiveRecord as an available method, and that it works to provide the polymorphic association
+necessary to make everything work.
+
+*0.1.2* 20 March 2011: Slight refactor to make the vanities controller render a 404 if it can't
+find a vanity object.  Small documentation update about routes (make sure vanities is
+the LAST route in your routes.rb file).
