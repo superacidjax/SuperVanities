@@ -5,7 +5,7 @@ module Vanities
   
   module ClassMethods
     def has_vanity
-      has_one :vanity, :as => :vain
+      has_one :slug, :as => :vain
     end
   end
   
